@@ -2,6 +2,8 @@ const express = require("express");
 const { urlencoded } = require("body-parser");
 const { twiml } = require("twilio");
 const { MessagingResponse } = twiml;
+const { Configuration, OpenAIApi } = require("openai");
+require("dotenv").config();
 
 // Create an Express application
 const app = express();
@@ -10,7 +12,7 @@ const app = express();
 app.use(urlencoded({ extended: false }));
 
 // Define a route to handle incoming messages from Twilio
-app.post("/webhook", (req, res) => {
+app.post("/webhook", async (req, res) => {
   console.log(req.body);
 
   const message = req.body.Body;
@@ -18,7 +20,10 @@ app.post("/webhook", (req, res) => {
   const profileName = req.body.ProfileName;
 
   // Process the incoming message and generate a response
-  const response = generateResponse(message);
+  const response = await generateResponse(
+    message,
+    profileName
+  );
 
   // Send the response back to the user
   const twiml = new MessagingResponse();
@@ -29,12 +34,29 @@ app.post("/webhook", (req, res) => {
 });
 
 // Function to generate a response based on the received message
-function generateResponse(message) {
-  // Add your response logic here
-  // You can use if-else statements, switch cases, or any other method to generate appropriate responses
+async function generateResponse(message, profileName) {
+  // Connect to the Openai API and send the message forward.
+  const configuration = new Configuration({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+
+  const openai = new OpenAIApi(configuration);
+  const response = await openai.createCompletion({
+    model: "text-davinci-003",
+    prompt: `This is what the user said : ${message}. 
+    Give a short introduction about yourself in two lines and continue the conversation ${profileName}`,
+    max_tokens: 500,
+    temperature: 0,
+  });
+
+  // console.log(response.data);
 
   // Example: Echo back the received message
-  return `You said: ${message}`;
+  // return `You said: ${message}`;
+  return `You said: ${message}
+${response.data.choices[0].text}
+
+${response.data.usage.total_tokens} tokens were used!`;
 }
 
 // Start the server
