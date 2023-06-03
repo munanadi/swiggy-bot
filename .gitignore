@@ -1,2 +1,5 @@
 node_modules
 .env
+audio.mp3
+transctipt.txt
+.DS_Store
