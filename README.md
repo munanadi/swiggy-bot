@@ -8,14 +8,9 @@ This should get Youtube, Instagram reel videos of cooking, baking etc and figure
 
 ## TODOs:
 
-- [x] ~~All Youtube Videos~~
-- [ ] Instagram reels
-
----
-
-Problems:
-
-1. Need to figure out how to manage tokens, can easily run out of them while parsing some videos
+1. ~~Need to figure out how to manage tokens, can easily run out of them while parsing some videos~~
+2. Instagram Reels
+3. Deploy as an actual bot
 
 ---
 
