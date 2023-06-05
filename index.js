@@ -32,22 +32,8 @@ app.use(urlencoded({ extended: false }));
 // Middleware for parsing JSON bodies
 app.use(json());
 
-// Checking tiktoken functionality
-app.post("/token", async (req, res) => {
-  const { prompt } = req.body;
-
-  if (prompt) {
-    const tokenCount = countTokens(prompt);
-    return res
-      .status(200)
-      .json({ result: tokenCount, error: null });
-  }
-
-  return res.status(400).json({
-    result: null,
-    error: "prompt not passed in body",
-  });
-});
+// Tester routes for local testing.
+app.use(testerRoutes);
 
 // Define a route to handle incoming messages from Twilio
 app.post("/webhook", async (req, res) => {
