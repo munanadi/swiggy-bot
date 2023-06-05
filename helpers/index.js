@@ -106,9 +106,87 @@ function countTokens(text) {
   return promptEncodedLength;
 }
 
+/**
+ * This will continue the conversation from where the assistant was cutoff the last time it replied
+ * taking care of the tokens that can be taken consiedering the prompt size
+ * @param openai OpenAI Client
+ * @param {string} prompt The first prompt sent by the user
+ * @param {string} reasonCompletion if this is length then recursive call self
+ * @param {string} lastResponse the last reponse the assistant replied with
+ * @returns
+ */
+async function continueConversation(
+  openai,
+  prompt,
+  reasonCompletion,
+  lastResponse
+) {
+  if (reasonCompletion !== "length") {
+    return;
+  }
+
+  const tokensInPrompt = countTokens(prompt) || 0;
+  // 4000 is the max but taking a safer bet.
+  const MAX_TOKENS_ALLOWED = 3800 - tokensInPrompt - 200;
+
+  // console.log({ tokensInPrompt, MAX_TOKENS_ALLOWED });
+
+  try {
+    const summaryResponse =
+      await openai.createChatCompletion({
+        model: "gpt-3.5-turbo",
+        messages: [
+          {
+            role: "system",
+            content: JSON.stringify(prompt),
+          },
+          {
+            role: "system",
+            content: `You as a bot have already started answering the user for what they have asked and your last reply to them was ${JSON.stringify(
+              lastResponse
+            )}`,
+          },
+          {
+            role: "system",
+            content: `Now you should continue from where you left off the conversation. Don't mention to the user you're continuing the conversation. They are waiting for you to reply. Just continue the conversation exactly from where you left it.`,
+          },
+        ],
+        temperature: 0,
+        max_tokens: MAX_TOKENS_ALLOWED,
+        frequency_penalty: 0,
+        presence_penalty: 0,
+      });
+
+    const data = summaryResponse.data.choices[0];
+
+    const reasonCompletion = data.finish_reason;
+    const message = data.message.content;
+
+    console.log(message);
+
+    if (reasonCompletion === "length") {
+      console.log(
+        `###----\nCut off by token length, Continuing the conversation...\n`
+      );
+      return continueConversation(
+        prompt,
+        reasonCompletion,
+        message
+      );
+    }
+  } catch (e) {
+    console.log(
+      "Couldnt continue the conversation, Something wrong!",
+      e.message
+    );
+  }
+  return;
+}
+
 module.exports = {
   sendLargeContent,
   sendUpdate,
   normaliseText,
   countTokens,
+  continueConversation,
 };
