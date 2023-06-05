@@ -24,3 +24,16 @@ Problems:
 1. Setup twilio account and connect sandbox
 2. run local node, and tunnel to expose to public internet (using ngork or cloudlfared)
 3. Set this exposed localhost in your sandbox settings in twilio
+
+---
+
+Get tokens used in the prompt with `token` POST endpoint
+
+```sh
+curl -X POST \
+-H "Content-Type: application/json" \
+-d '{
+  "prompt": "Your prompt here"
+}' \
+http://localhost:3000/token
+```

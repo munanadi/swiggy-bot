@@ -1,3 +1,5 @@
+const { encode } = require("gpt-3-encoder");
+
 /**
  * This will take a large text and chunk it down to chunkSize and send it to the user
  * and makes sure the messages are sent sequentially
@@ -81,7 +83,32 @@ async function sendUpdate(client, sender, text) {
   }
 }
 
+/**
+ * This will help you get rid of text with \n formatting
+ * @param {string} text text you want to format
+ * @returns clean text free of \n formatting
+ */
+function normaliseText(text) {
+  return text.replace(/\n/g, "");
+}
+
+/**
+ * Returns number of tokens in text, approx close to gpt-3
+ * @param {string} text input text
+ * @returns number of tokens in a string
+ * See {@link https://github.com/latitudegames/GPT-3-Encoder#readme}
+ */
+function countTokens(text) {
+  const normalisedPrompt = normaliseText(text);
+  const promptEncodedLength = encode(
+    normalisedPrompt
+  ).length;
+  return promptEncodedLength;
+}
+
 module.exports = {
   sendLargeContent,
   sendUpdate,
+  normaliseText,
+  countTokens,
 };
