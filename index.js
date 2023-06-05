@@ -9,6 +9,7 @@ const {
   sendLargeContent,
   sendUpdate,
   normaliseText,
+  continueConversation,
   countTokens,
 } = require("./helpers");
 
@@ -156,31 +157,42 @@ async function handleYoutubeLinks(youtubeId, sender) {
     const prompt =
       `The following is a transcript of cooking a recipe titled ${videoTitle}, explaning the steps and ingredienets. List out the steps required to cook this recipe along with its ingredients. Here goes the transcript: ${transcript}`.toString();
 
+    const tokensInPrompt = countTokens(prompt) || 0;
+    // 4000 is the max but taking a safer bet.
+    const MAX_TOKENS_ALLOWED = 3800 - tokensInPrompt - 1500;
+
     // Summary of ingredients and procedure
     // TODO: May run out of tokens, need to chunk and complete. need to understand more about tokens.
-    const summaryResponse = await openai.createCompletion(
-      {
-        model: "text-davinci-003",
-        prompt,
+    const summaryResponse =
+      await openai.createChatCompletion({
+        model: "gpt-3.5-turbo",
+        messages: [
+          {
+            role: "system",
+            content: JSON.stringify(prompt),
+          },
+        ],
         temperature: 0,
-        max_tokens: 1000,
+        max_tokens: MAX_TOKENS_ALLOWED,
         top_p: 1,
         frequency_penalty: 0,
         presence_penalty: 0,
-      }
-      // {
-      //   maxContentLength: Infinity,
-      //   maxBodyLength: Infinity,
-      // }
-    );
+        // echo: true,
+      });
 
-    const summaryData = summaryResponse.data;
+    const summaryData = summaryResponse.data.choices[0];
 
-    const finishReason =
-      summaryData.choices[0].finish_reason;
+    const reasonCompletion = summaryData.finish_reason;
+    const summaryText = summaryData.message.content;
 
-    console.log({ finishReason });
-    const summaryText = summaryData.choices[0].text;
+    if (reasonCompletion === "length") {
+      await continueConversation(
+        openai,
+        prompt,
+        reasonCompletion,
+        summaryText
+      );
+    }
 
     return summaryText;
   } catch (e) {
