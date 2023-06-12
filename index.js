@@ -34,7 +34,7 @@ app.use(urlencoded({ extended: false }));
 app.use(json());
 
 // Tester routes for local testing.
-app.use(testerRoutes);
+// app.use(testerRoutes);
 
 // Define a route to handle incoming messages from Twilio
 app.post("/webhook", async (req, res) => {
@@ -183,10 +183,10 @@ async function handleYoutubeLinks(youtubeId, sender) {
     const summaryData = summaryResponse.data.choices[0];
 
     const reasonCompletion = summaryData.finish_reason;
-    const summaryText = summaryData.message.content;
+    let summaryText = summaryData.message.content;
 
     if (reasonCompletion === "length") {
-      await continueConversation(
+      summaryText += await continueConversation(
         openai,
         prompt,
         reasonCompletion,

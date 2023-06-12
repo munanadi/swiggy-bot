@@ -113,7 +113,7 @@ function countTokens(text) {
  * @param {string} prompt The first prompt sent by the user
  * @param {string} reasonCompletion if this is length then recursive call self
  * @param {string} lastResponse the last reponse the assistant replied with
- * @returns
+ * @returns {string} the whole answer in chunks as a string or  ""
  */
 async function continueConversation(
   openai,
@@ -121,8 +121,10 @@ async function continueConversation(
   reasonCompletion,
   lastResponse
 ) {
+  let message = "";
+
   if (reasonCompletion !== "length") {
-    return;
+    return message;
   }
 
   const tokensInPrompt = countTokens(prompt) || 0;
@@ -160,9 +162,9 @@ async function continueConversation(
     const data = summaryResponse.data.choices[0];
 
     const reasonCompletion = data.finish_reason;
-    const message = data.message.content;
+    message = data.message.content;
 
-    console.log(message);
+    // console.log(message);
 
     if (reasonCompletion === "length") {
       console.log(
@@ -180,7 +182,7 @@ async function continueConversation(
       e.message
     );
   }
-  return;
+  return message;
 }
 
 module.exports = {
